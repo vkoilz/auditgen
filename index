@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BizDev Scout — Audit → Draft Chat | Lion Creative</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --card: #1a2332;
+    --border: #2a3548;
+    --text: #e8eef7;
+    --muted: #8b9bb4;
+    --accent: #c9a227;
+    --accent-dim: #a6851f;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --input-bg: #121a24;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.3rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 18px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .card.full { grid-column: 1 / -1; }
+  .card h2 {
+    font-size: 0.9rem;
+    color: var(--accent);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  label {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-bottom: 3px;
+    margin-top: 9px;
+  }
+  label:first-of-type { margin-top: 0; }
+  input[type="text"], input[type="number"], select, textarea {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 7px 10px;
+    font-size: 0.88rem;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { min-height: 64px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .posts-list { display: flex; flex-direction: column; gap: 6px; }
+  .post-row {
+    display: grid;
+    grid-template-columns: 68px 58px 88px 1fr 26px;
+    gap: 5px;
+    align-items: end;
+  }
+  .post-row input, .post-row select { margin: 0; }
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    height: 34px;
+    font-size: 1rem;
+  }
+  .btn-icon:hover { border-color: var(--red); color: var(--red); }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: none;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .btn-primary { background: var(--accent); color: #111; }
+  .btn-primary:hover { background: var(--accent-dim); }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-secondary:hover { background: #3a4a63; }
+  .btn-sm { padding: 5px 11px; font-size: 0.78rem; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; align-items: center; }
+  .traffic { display: flex; gap: 10px; }
+  .traffic label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+  .output-box {
+    background: #0a0e14;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    min-height: 180px;
+    white-space: pre-wrap;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.8rem;
+    line-height: 1.55;
+    color: #d1dae8;
+  }
+  .hint { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
+  .copy-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--green);
+    color: #111;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.22s ease;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .copy-toast.show { opacity: 1; transform: translateY(0); }
+  .chk-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+  .chk-row label {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text);
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>🦁 BizDev Scout — Audit → Draft Chat</h1>
+<p class="subtitle">Isi field → Generate teks rapi → copy → kasih makan AI supaya bikin draf chat outreach.</p>
+
+<div class="grid">
+
+  <div class="card">
+    <h2>1. Identitas</h2>
+    <label>Nama Properti</label>
+    <input type="text" id="nama" placeholder="Edge Resort Yogyakarta"/>
+    <div class="row">
+      <div>
+        <label>IG Handle</label>
+        <input type="text" id="ig" placeholder="edgeresort"/>
+      </div>
+      <div>
+        <label>Followers</label>
+        <input type="text" id="followers" placeholder="2393"/>
+      </div>
+    </div>
+    <label>History akun (opsional)</label>
+    <input type="text" id="history" placeholder="sebelumnya ada akun IG ribuan follower, 2 akun terbengkalai"/>
+    <label>Traffic Light</label>
+    <div class="traffic">
+      <label><input type="radio" name="tl" value="🟢"/> 🟢</label>
+      <label><input type="radio" name="tl" value="🟡" checked/> 🟡</label>
+      <label><input type="radio" name="tl" value="🔴"/> 🔴</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Konten 30 Hari</h2>
+    <div class="row">
+      <div>
+        <label>Total post 30 hari</label>
+        <input type="number" id="totalPost" placeholder="5"/>
+      </div>
+      <div>
+        <label>Reels?</label>
+        <select id="reels">
+          <option value="hampir semua">hampir semua</option>
+          <option value="sebagian besar">sebagian besar</option>
+          <option value="sebagian">sebagian</option>
+          <option value="jarang">jarang</option>
+          <option value="tidak ada">tidak ada</option>
+        </select>
+      </div>
+    </div>
+    <label>Detail post (likes · komen · tipe · tanggal)</label>
+    <div class="posts-list" id="postsList"></div>
+    <button type="button" class="btn btn-secondary btn-sm" style="margin-top:7px" onclick="addPost()">+ Post</button>
+  </div>
+
+  <div class="card">
+    <h2>3. Visual</h2>
+    <label>Pencahayaan foto</label>
+    <select id="lighting">
+      <option value="jelas">jelas</option>
+      <option value="sebagian jelas">sebagian jelas</option>
+      <option value="kurang">kurang</option>
+      <option value="inkonsisten">inkonsisten</option>
+    </select>
+    <label>Tema warna / identitas feed</label>
+    <input type="text" id="tema" placeholder="konsisten eco natural / partial / tidak konsisten"/>
+    <label>Foto profil</label>
+    <input type="text" id="pp" placeholder="jelas — logo simbol"/>
+  </div>
+
+  <div class="card">
+    <h2>4. Bio & Link</h2>
+    <label>Link di bio</label>
+    <input type="text" id="bioLink" placeholder="Linktree: Edge Resort Yogyakarta"/>
+    <label>Link yang tersedia</label>
+    <div class="chk-row">
+      <label><input type="checkbox" id="hasWA"/> WA</label>
+      <label><input type="checkbox" id="hasGMaps"/> GMaps</label>
+      <label><input type="checkbox" id="hasWeb"/> Website</label>
+      <label><input type="checkbox" id="hasOTA"/> OTA</label>
+      <label><input type="checkbox" id="hasTT"/> TikTok</label>
+    </div>
+    <label>Catatan bio</label>
+    <input type="text" id="bioNote" placeholder="ada MICE & Group Reservation"/>
+  </div>
+
+  <div class="card">
+    <h2>5. Review & Respons</h2>
+    <label>Review dibalas owner</label>
+    <select id="replyRate">
+      <option value="hampir semua / semua">hampir semua / semua</option>
+      <option value="mayoritas">mayoritas</option>
+      <option value="beberapa">beberapa</option>
+      <option value="nyaris tidak ada">nyaris tidak ada</option>
+    </select>
+    <label>Sumber foto (GMaps/review)</label>
+    <select id="fotoSumber">
+      <option value="pemilik banyak, pengunjung beberapa">pemilik banyak, pengunjung beberapa</option>
+      <option value="mayoritas pengunjung">mayoritas pengunjung</option>
+      <option value="campur seimbang">campur seimbang</option>
+      <option value="hampir semua pemilik">hampir semua pemilik</option>
+    </select>
+    <label>Jam operasional GMaps</label>
+    <select id="jamOps">
+      <option value="tidak terisi">tidak terisi</option>
+      <option value="terisi">terisi</option>
+      <option value="parsial">parsial</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h2>6. Sinyal Eksternal</h2>
+    <label>Media / artikel Google</label>
+    <input type="text" id="media" placeholder="1–2 mention so-so / ada liputan bagus / tidak ketemu"/>
+    <label>TikTok kreator</label>
+    <input type="text" id="tiktok" placeholder="ada / beberapa / belum ketemu"/>
+    <label>Mention tamu di IG</label>
+    <input type="text" id="mention" placeholder="ada / jarang / tidak terlihat"/>
+  </div>
+
+  <div class="card full">
+    <h2>7. Deskripsi + Ulasan (opsional, bantu AI)</h2>
+    <label>Deskripsi singkat properti</label>
+    <textarea id="deskripsi" rows="3" placeholder="Eco-resort di tebing 150m Giricahyo, Gunungkidul. Infinity pool, 15 kamar, view Samudra Hindia..."></textarea>
+    <label>Ringkas 1–2 ulasan terbaik (bukan full paste)</label>
+    <textarea id="ulasan" rows="3" placeholder="Tamu puji view laut, infinity pool, staff ramah, nasi goreng ikan asin. Owner balas detail & ramah."></textarea>
+  </div>
+
+  <div class="card full">
+    <h2>8. Hook (wajib untuk draf chat)</h2>
+    <label>1 temuan paling kuat (angka + waktu + pembanding kalau ada)</label>
+    <input type="text" id="hook" placeholder="Engagement KOL 188–200 likes, post organik cuma 20 likes (27 Agu) — gap konten organic besar"/>
+    <label>Catatan internal (tidak masuk output AI)</label>
+    <input type="text" id="catatan" placeholder="skip kompetitor dulu"/>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-primary" onclick="generate()">⚡ Generate untuk AI</button>
+  <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy</button>
+  <button class="btn btn-secondary" onclick="fillExample()">Contoh Edge Resort</button>
+  <button class="btn btn-secondary" onclick="clearAll()">Reset</button>
+</div>
+
+<div class="card full">
+  <h2>Output — siap paste ke AI</h2>
+  <div class="output-box" id="output">Isi form → Generate. Teks di bawah langsung bisa dikasih ke AI untuk bikin draf chat.</div>
+</div>
+
+<div class="copy-toast" id="toast">Tersalin ✓</div>
+
+<script>
+function addPost(data = {}) {
+  const list = document.getElementById('postsList');
+  const row = document.createElement('div');
+  row.className = 'post-row';
+  row.innerHTML = `
+    <div>
+      <label style="margin:0;font-size:0.68rem">Likes</label>
+      <input type="text" class="p-likes" placeholder="188" value="${data.likes || ''}"/>
+    </div>
+    <div>
+      <label style="margin:0;font-size:0.68rem">Komen</label>
+      <input type="text" class="p-komen" placeholder="1" value="${data.komen || ''}"/>
+    </div>
+    <div>
+      <label style="margin:0;font-size:0.68rem">Tipe</label>
+      <select class="p-tipe">
+        <option value="KOL" ${data.tipe === 'KOL' ? 'selected' : ''}>KOL</option>
+        <option value="non-KOL" ${data.tipe === 'non-KOL' ? 'selected' : ''}>non-KOL</option>
+        <option value="organik" ${data.tipe === 'organik' ? 'selected' : ''}>organik</option>
+      </select>
+    </div>
+    <div>
+      <label style="margin:0;font-size:0.68rem">Tanggal / catatan</label>
+      <input type="text" class="p-tgl" placeholder="10 sept · influencer" value="${data.tgl || ''}"/>
+    </div>
+    <button type="button" class="btn-icon" onclick="this.parentElement.remove()">×</button>
+  `;
+  list.appendChild(row);
+}
+
+function getPosts() {
+  return Array.from(document.querySelectorAll('#postsList .post-row')).map(r => ({
+    likes: r.querySelector('.p-likes').value.trim(),
+    komen: r.querySelector('.p-komen').value.trim(),
+    tipe: r.querySelector('.p-tipe').value,
+    tgl: r.querySelector('.p-tgl').value.trim()
+  })).filter(p => p.likes || p.komen || p.tgl);
+}
+
+function v(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function c(id) { const el = document.getElementById(id); return el && el.checked; }
+function tl() { const r = document.querySelector('input[name="tl"]:checked'); return r ? r.value : '🟡'; }
+
+function generate() {
+  const nama = v('nama') || '[Nama]';
+  const ig = v('ig');
+  const followers = v('followers');
+  const history = v('history');
+  const totalPost = v('totalPost');
+  const reels = v('reels');
+  const posts = getPosts();
+  const lighting = v('lighting');
+  const tema = v('tema');
+  const pp = v('pp');
+  const bioLink = v('bioLink');
+  const bioNote = v('bioNote');
+  const replyRate = v('replyRate');
+  const fotoSumber = v('fotoSumber');
+  const jamOps = v('jamOps');
+  const media = v('media');
+  const tiktok = v('tiktok');
+  const mention = v('mention');
+  const deskripsi = v('deskripsi');
+  const ulasan = v('ulasan');
+  const hook = v('hook');
+
+  const links = [];
+  if (c('hasWA')) links.push('WA');
+  if (c('hasGMaps')) links.push('GMaps');
+  if (c('hasWeb')) links.push('Website');
+  if (c('hasOTA')) links.push('OTA');
+  if (c('hasTT')) links.push('TikTok');
+
+  // Ringkas post untuk AI
+  let postLines = [];
+  let kolCount = 0, nonKolCount = 0;
+  let maxLikes = 0, minLikes = Infinity;
+  posts.forEach((p, i) => {
+    const parts = [];
+    if (p.likes) {
+      parts.push(p.likes + ' likes');
+      const n = parseInt(p.likes, 10);
+      if (!isNaN(n)) {
+        if (n > maxLikes) maxLikes = n;
+        if (n < minLikes) minLikes = n;
+      }
+    }
+    if (p.komen) parts.push(p.komen + ' komen');
+    if (p.tipe) {
+      parts.push(p.tipe);
+      if (p.tipe === 'KOL') kolCount++;
+      else nonKolCount++;
+    }
+    if (p.tgl) parts.push(p.tgl);
+    postLines.push(`- Post ${i + 1}: ${parts.join(' · ')}`);
+  });
+
+  const lines = [];
+
+  // Header ringkas
+  lines.push(`PROSPEK: ${nama}`);
+  if (ig) lines.push(`IG: @${ig.replace(/^@/, '')}${followers ? ' · ' + followers + ' followers' : ''}`);
+  if (history) lines.push(`History: ${history}`);
+  lines.push(`Status: ${tl()}`);
+  lines.push('');
+
+  // Temuan utama (hook dulu biar AI fokus)
+  if (hook) {
+    lines.push('TEMUAN UTAMA (HOOK):');
+    lines.push(hook);
+    lines.push('');
+  }
+
+  // Konten ringkas + angka
+  lines.push('KONTEN (30 hari terakhir):');
+  if (totalPost) lines.push(`- Total post: ${totalPost}`);
+  if (posts.length) {
+    lines.push(`- Rincian: ${kolCount} KOL, ${nonKolCount} non-KOL/organik`);
+    if (maxLikes > 0 && minLikes < Infinity && maxLikes !== minLikes) {
+      lines.push(`- Range likes: ${minLikes}–${maxLikes}`);
+    }
+    postLines.forEach(l => lines.push(l));
+  }
+  lines.push(`- Reels: ${reels}`);
+  lines.push('');
+
+  // Visual singkat
+  lines.push('VISUAL:');
+  lines.push(`- Pencahayaan: ${lighting}`);
+  if (tema) lines.push(`- Tema/warna feed: ${tema}`);
+  if (pp) lines.push(`- Foto profil: ${pp}`);
+  lines.push('');
+
+  // Bio
+  lines.push('BIO & LINK:');
+  if (bioLink) lines.push(`- ${bioLink}`);
+  if (links.length) lines.push(`- Tersedia: ${links.join(', ')}`);
+  if (bioNote) lines.push(`- Catatan: ${bioNote}`);
+  lines.push('');
+
+  // Review
+  lines.push('REVIEW:');
+  lines.push(`- Respons owner: ${replyRate}`);
+  lines.push(`- Sumber foto: ${fotoSumber}`);
+  lines.push(`- Jam operasional GMaps: ${jamOps}`);
+  lines.push('');
+
+  // Eksternal
+  if (media || tiktok || mention) {
+    lines.push('SINYAL LAIN:');
+    if (media) lines.push(`- Media/artikel: ${media}`);
+    if (tiktok) lines.push(`- TikTok kreator: ${tiktok}`);
+    if (mention) lines.push(`- Mention tamu IG: ${mention}`);
+    lines.push('');
+  }
+
+  if (deskripsi) {
+    lines.push('DESKRIPSI SINGKAT:');
+    lines.push(deskripsi);
+    lines.push('');
+  }
+  if (ulasan) {
+    lines.push('RINGKAS ULASAN TAMU:');
+    lines.push(ulasan);
+    lines.push('');
+  }
+
+  // Instruksi tetap untuk AI
+  lines.push('---');
+  lines.push('INSTRUKSI UNTUK DRAF CHAT:');
+  lines.push('- Buat 1 draf chat WhatsApp singkat, natural, non-salesy.');
+  lines.push('- Gaya: appreciative + observation-based (puji 1 hal konkret dari temuan di atas).');
+  lines.push('- Tawarkan chat santai 15–20 menit, jangan hard sell.');
+  lines.push('- Jangan sebut harga / paket / website development.');
+  lines.push('- Fokus pain point yang relevan dari TEMUAN UTAMA (konten/SMM/ads/KOL/live/direct booking).');
+  lines.push('- Scout name: Fariz. Bahasa Indonesia santai profesional.');
+  lines.push('- 1 hook saja, jangan list banyak masalah.');
+
+  document.getElementById('output').textContent = lines.join('\n').trim();
+}
+
+function copyOutput() {
+  const text = document.getElementById('output').textContent;
+  if (!text || text.startsWith('Isi form')) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1600);
+  });
+}
+
+function clearAll() {
+  document.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => el.value = '');
+  document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+  document.getElementById('postsList').innerHTML = '';
+  addPost();
+  document.getElementById('output').textContent = 'Isi form → Generate. Teks di bawah langsung bisa dikasih ke AI untuk bikin draf chat.';
+  document.querySelector('input[name="tl"][value="🟡"]').checked = true;
+}
+
+function fillExample() {
+  document.getElementById('nama').value = 'Edge Resort Yogyakarta';
+  document.getElementById('ig').value = 'edgeresort';
+  document.getElementById('followers').value = '2393';
+  document.getElementById('history').value = 'sebelumnya ada akun IG ribuan follower, 2 akun terbengkalai';
+  document.getElementById('totalPost').value = '5';
+  document.getElementById('reels').value = 'hampir semua';
+  document.getElementById('lighting').value = 'jelas';
+  document.getElementById('tema').value = 'konsisten eco / cliff resort natural';
+  document.getElementById('pp').value = 'jelas — logo simbol';
+  document.getElementById('bioLink').value = 'Linktree: Edge Resort Yogyakarta';
+  document.getElementById('hasWA').checked = true;
+  document.getElementById('hasGMaps').checked = true;
+  document.getElementById('hasWeb').checked = true;
+  document.getElementById('hasTT').checked = true;
+  document.getElementById('bioNote').value = 'ada MICE & Group Reservation';
+  document.getElementById('replyRate').value = 'hampir semua / semua';
+  document.getElementById('fotoSumber').value = 'pemilik banyak, pengunjung beberapa';
+  document.getElementById('jamOps').value = 'tidak terisi';
+  document.getElementById('media').value = '1–2 mention so-so';
+  document.getElementById('tiktok').value = 'ada maybe';
+  document.getElementById('mention').value = 'ada';
+  document.getElementById('deskripsi').value = 'Eco-resort di tebing 150m Giricahyo, Gunungkidul. View Samudra Hindia, infinity pool + floating breakfast, 15 kamar saja. Akses 1 km terakhir jalan berbatu.';
+  document.getElementById('ulasan').value = 'Tamu puji view laut, infinity pool malam, staff ramah, nasi goreng ikan asin terenak. Owner balas detail & hangat ke hampir semua review.';
+  document.getElementById('hook').value = 'Post KOL dapat 117–200 likes, tapi post organik terakhir cuma 20 likes (27 Agu) — gap engagement organic vs KOL cukup besar.';
+  document.getElementById('catatan').value = 'skip kompetitor dulu';
+
+  document.getElementById('postsList').innerHTML = '';
+  addPost({ likes: '63', komen: '1', tipe: 'KOL', tgl: '10 sept · kolaborasi jogja' });
+  addPost({ likes: '188', komen: '1', tipe: 'KOL', tgl: '10 sept · influencer' });
+  addPost({ likes: '117', komen: '4', tipe: 'KOL', tgl: '7 sept' });
+  addPost({ likes: '200', komen: '11', tipe: 'KOL', tgl: '6 september' });
+  addPost({ likes: '20', komen: '0', tipe: 'non-KOL', tgl: '27 agustus' });
+  generate();
+}
+
+addPost();
+</script>
+</body>
+</html>
