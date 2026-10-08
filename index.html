@@ -298,6 +298,9 @@
   <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy</button>
   <button class="btn btn-secondary" onclick="fillExample()">Contoh Edge Resort</button>
   <button class="btn btn-secondary" onclick="clearAll()">Reset</button>
+  <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--muted);cursor:pointer">
+    <input type="checkbox" id="showInstruksi"/> Tampilkan instruksi draf chat
+  </label>
 </div>
 
 <div class="card full">
@@ -475,16 +478,18 @@ function generate() {
     lines.push('');
   }
 
-  // Instruksi tetap untuk AI
-  lines.push('---');
-  lines.push('INSTRUKSI UNTUK DRAF CHAT:');
-  lines.push('- Buat 1 draf chat WhatsApp singkat, natural, non-salesy.');
-  lines.push('- Gaya: appreciative + observation-based (puji 1 hal konkret dari temuan di atas).');
-  lines.push('- Tawarkan chat santai 15–20 menit, jangan hard sell.');
-  lines.push('- Jangan sebut harga / paket / website development.');
-  lines.push('- Fokus pain point yang relevan dari TEMUAN UTAMA (konten/SMM/ads/KOL/live/direct booking).');
-  lines.push('- Scout name: Fariz. Bahasa Indonesia santai profesional.');
-  lines.push('- 1 hook saja, jangan list banyak masalah.');
+  // Instruksi draf chat — hanya muncul jika checkbox dicentang
+  if (document.getElementById('showInstruksi').checked) {
+    lines.push('---');
+    lines.push('INSTRUKSI UNTUK DRAF CHAT:');
+    lines.push('- Buat 1 draf chat WhatsApp singkat, natural, non-salesy.');
+    lines.push('- Gaya: appreciative + observation-based (puji 1 hal konkret dari temuan di atas).');
+    lines.push('- Tawarkan chat santai 15–20 menit, jangan hard sell.');
+    lines.push('- Jangan sebut harga / paket / website development.');
+    lines.push('- Fokus pain point yang relevan dari TEMUAN UTAMA (konten/SMM/ads/KOL/live/direct booking).');
+    lines.push('- Scout name: Fariz. Bahasa Indonesia santai profesional.');
+    lines.push('- 1 hook saja, jangan list banyak masalah.');
+  }
 
   document.getElementById('output').textContent = lines.join('\n').trim();
 }
