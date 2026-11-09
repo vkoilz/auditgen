@@ -104,6 +104,8 @@
   .btn-secondary { background: var(--border); color: var(--text); }
   .btn-secondary:hover { background: #3a4a63; }
   .btn-sm { padding: 5px 11px; font-size: 0.78rem; }
+  .btn-danger { background: #3a1f1f; color: #f87171; border: 1px solid #5c2b2b; }
+  .btn-danger:hover { background: #5c2b2b; }
   .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; align-items: center; }
   .traffic { display: flex; gap: 10px; }
   .traffic label {
@@ -155,19 +157,83 @@
     font-size: 0.82rem;
     cursor: pointer;
   }
+  /* Memory UI */
+  .mem-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .mem-bar select {
+    max-width: 280px;
+    flex: 1;
+    min-width: 160px;
+  }
+  .mem-status {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .mem-status.loaded { color: var(--green); }
+  .nama-wrap { position: relative; }
+  .suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+    z-index: 50;
+    display: none;
+  }
+  .suggestions.show { display: block; }
+  .suggestions div {
+    padding: 7px 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .suggestions div:hover, .suggestions div.active {
+    background: #243044;
+    color: var(--accent);
+  }
+  .suggestions div:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
 
 <h1>🦁 BizDev Scout — Audit → Draft Chat</h1>
-<p class="subtitle">Isi field → Generate teks rapi → copy → kasih makan AI supaya bikin draf chat outreach.</p>
+<p class="subtitle">Isi field → Generate teks rapi → copy → kasih makan AI supaya bikin draf chat outreach.<br>
+<span style="color:var(--accent)">⌨️ Enter / Tab</span> = pindah field · <span style="color:var(--accent)">💾 Memori</span> = auto-save & auto-load per nama properti (unlimited, tersimpan di browser).</p>
+
+<div class="mem-bar">
+  <label style="margin:0;font-size:0.78rem;color:var(--muted)">Memori tersimpan:</label>
+  <select id="memSelect">
+    <option value="">— pilih untuk load —</option>
+  </select>
+  <button type="button" class="btn btn-secondary btn-sm" onclick="loadFromSelect()">Load</button>
+  <button type="button" class="btn btn-secondary btn-sm" onclick="saveCurrent()">💾 Simpan sekarang</button>
+  <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelected()">Hapus</button>
+  <span class="mem-status" id="memStatus">0 properti tersimpan</span>
+</div>
 
 <div class="grid">
 
   <div class="card">
     <h2>1. Identitas</h2>
     <label>Nama Properti</label>
-    <input type="text" id="nama" placeholder="Edge Resort Yogyakarta"/>
+    <div class="nama-wrap">
+      <input type="text" id="nama" placeholder="Edge Resort Yogyakarta" autocomplete="off"/>
+      <div class="suggestions" id="namaSuggestions"></div>
+    </div>
+    <div class="hint">Ketik nama yang pernah disimpan → muncul saran & auto-isi semua field</div>
     <div class="row">
       <div>
         <label>IG Handle</label>
@@ -311,6 +377,158 @@
 <div class="copy-toast" id="toast">Tersalin ✓</div>
 
 <script>
+const STORAGE_KEY = 'lion_bizdev_scout_memory_v1';
+
+/* ========== MEMORY ========== */
+function getMemory() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  } catch { return {}; }
+}
+
+function setMemory(obj) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  refreshMemSelect();
+}
+
+function refreshMemSelect() {
+  const mem = getMemory();
+  const keys = Object.keys(mem).sort((a, b) => a.localeCompare(b, 'id'));
+  const sel = document.getElementById('memSelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— pilih untuk load —</option>';
+  keys.forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k;
+    opt.textContent = k + (mem[k]._savedAt ? ' · ' + mem[k]._savedAt : '');
+    sel.appendChild(opt);
+  });
+  if (current && mem[current]) sel.value = current;
+  const st = document.getElementById('memStatus');
+  st.textContent = keys.length + ' properti tersimpan';
+  st.className = 'mem-status' + (keys.length ? ' loaded' : '');
+}
+
+function collectFormData() {
+  const posts = getPosts();
+  return {
+    nama: v('nama'),
+    ig: v('ig'),
+    followers: v('followers'),
+    history: v('history'),
+    tl: tl(),
+    totalPost: v('totalPost'),
+    reels: v('reels'),
+    posts,
+    lighting: v('lighting'),
+    tema: v('tema'),
+    pp: v('pp'),
+    bioLink: v('bioLink'),
+    hasWA: c('hasWA'),
+    hasGMaps: c('hasGMaps'),
+    hasWeb: c('hasWeb'),
+    hasOTA: c('hasOTA'),
+    hasTT: c('hasTT'),
+    bioNote: v('bioNote'),
+    replyRate: v('replyRate'),
+    fotoSumber: v('fotoSumber'),
+    jamOps: v('jamOps'),
+    media: v('media'),
+    tiktok: v('tiktok'),
+    mention: v('mention'),
+    deskripsi: v('deskripsi'),
+    ulasan: v('ulasan'),
+    hook: v('hook'),
+    catatan: v('catatan'),
+    showInstruksi: c('showInstruksi'),
+    _savedAt: new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  };
+}
+
+function applyFormData(data) {
+  if (!data) return;
+  document.getElementById('nama').value = data.nama || '';
+  document.getElementById('ig').value = data.ig || '';
+  document.getElementById('followers').value = data.followers || '';
+  document.getElementById('history').value = data.history || '';
+  const tlVal = data.tl || '🟡';
+  const radio = document.querySelector(`input[name="tl"][value="${tlVal}"]`);
+  if (radio) radio.checked = true;
+  document.getElementById('totalPost').value = data.totalPost || '';
+  document.getElementById('reels').value = data.reels || 'hampir semua';
+  document.getElementById('lighting').value = data.lighting || 'jelas';
+  document.getElementById('tema').value = data.tema || '';
+  document.getElementById('pp').value = data.pp || '';
+  document.getElementById('bioLink').value = data.bioLink || '';
+  document.getElementById('hasWA').checked = !!data.hasWA;
+  document.getElementById('hasGMaps').checked = !!data.hasGMaps;
+  document.getElementById('hasWeb').checked = !!data.hasWeb;
+  document.getElementById('hasOTA').checked = !!data.hasOTA;
+  document.getElementById('hasTT').checked = !!data.hasTT;
+  document.getElementById('bioNote').value = data.bioNote || '';
+  document.getElementById('replyRate').value = data.replyRate || 'hampir semua / semua';
+  document.getElementById('fotoSumber').value = data.fotoSumber || 'pemilik banyak, pengunjung beberapa';
+  document.getElementById('jamOps').value = data.jamOps || 'tidak terisi';
+  document.getElementById('media').value = data.media || '';
+  document.getElementById('tiktok').value = data.tiktok || '';
+  document.getElementById('mention').value = data.mention || '';
+  document.getElementById('deskripsi').value = data.deskripsi || '';
+  document.getElementById('ulasan').value = data.ulasan || '';
+  document.getElementById('hook').value = data.hook || '';
+  document.getElementById('catatan').value = data.catatan || '';
+  document.getElementById('showInstruksi').checked = !!data.showInstruksi;
+
+  // Posts
+  document.getElementById('postsList').innerHTML = '';
+  if (data.posts && data.posts.length) {
+    data.posts.forEach(p => addPost(p));
+  } else {
+    addPost();
+  }
+  showToast('Loaded: ' + (data.nama || 'data'));
+}
+
+function saveCurrent() {
+  const nama = v('nama');
+  if (!nama) {
+    showToast('Isi Nama Properti dulu');
+    return;
+  }
+  const mem = getMemory();
+  mem[nama] = collectFormData();
+  setMemory(mem);
+  document.getElementById('memSelect').value = nama;
+  showToast('Tersimpan: ' + nama);
+}
+
+function loadFromSelect() {
+  const key = document.getElementById('memSelect').value;
+  if (!key) return;
+  const mem = getMemory();
+  if (mem[key]) applyFormData(mem[key]);
+}
+
+function deleteSelected() {
+  const key = document.getElementById('memSelect').value;
+  if (!key) return;
+  if (!confirm('Hapus memori "' + key + '"?')) return;
+  const mem = getMemory();
+  delete mem[key];
+  setMemory(mem);
+  showToast('Dihapus: ' + key);
+}
+
+/* Auto-save on Generate + when leaving nama field if exact match exists or after generate */
+function tryAutoLoadByName() {
+  const nama = v('nama');
+  if (!nama) return;
+  const mem = getMemory();
+  if (mem[nama]) {
+    applyFormData(mem[nama]);
+  }
+}
+
+/* ========== POSTS ========== */
 function addPost(data = {}) {
   const list = document.getElementById('postsList');
   const row = document.createElement('div');
@@ -354,7 +572,11 @@ function v(id) { const el = document.getElementById(id); return el ? el.value.tr
 function c(id) { const el = document.getElementById(id); return el && el.checked; }
 function tl() { const r = document.querySelector('input[name="tl"]:checked'); return r ? r.value : '🟡'; }
 
+/* ========== GENERATE ========== */
 function generate() {
+  // Auto-save before generate if nama filled
+  if (v('nama')) saveCurrent();
+
   const nama = v('nama') || '[Nama]';
   const ig = v('ig');
   const followers = v('followers');
@@ -384,7 +606,6 @@ function generate() {
   if (c('hasOTA')) links.push('OTA');
   if (c('hasTT')) links.push('TikTok');
 
-  // Ringkas post untuk AI
   let postLines = [];
   let kolCount = 0, nonKolCount = 0;
   let maxLikes = 0, minLikes = Infinity;
@@ -409,22 +630,18 @@ function generate() {
   });
 
   const lines = [];
-
-  // Header ringkas
   lines.push(`PROSPEK: ${nama}`);
   if (ig) lines.push(`IG: @${ig.replace(/^@/, '')}${followers ? ' · ' + followers + ' followers' : ''}`);
   if (history) lines.push(`History: ${history}`);
   lines.push(`Status: ${tl()}`);
   lines.push('');
 
-  // Temuan utama (hook dulu biar AI fokus)
   if (hook) {
     lines.push('TEMUAN UTAMA (HOOK):');
     lines.push(hook);
     lines.push('');
   }
 
-  // Konten ringkas + angka
   lines.push('KONTEN (30 hari terakhir):');
   if (totalPost) lines.push(`- Total post: ${totalPost}`);
   if (posts.length) {
@@ -437,28 +654,24 @@ function generate() {
   lines.push(`- Reels: ${reels}`);
   lines.push('');
 
-  // Visual singkat
   lines.push('VISUAL:');
   lines.push(`- Pencahayaan: ${lighting}`);
   if (tema) lines.push(`- Tema/warna feed: ${tema}`);
   if (pp) lines.push(`- Foto profil: ${pp}`);
   lines.push('');
 
-  // Bio
   lines.push('BIO & LINK:');
   if (bioLink) lines.push(`- ${bioLink}`);
   if (links.length) lines.push(`- Tersedia: ${links.join(', ')}`);
   if (bioNote) lines.push(`- Catatan: ${bioNote}`);
   lines.push('');
 
-  // Review
   lines.push('REVIEW:');
   lines.push(`- Respons owner: ${replyRate}`);
   lines.push(`- Sumber foto: ${fotoSumber}`);
   lines.push(`- Jam operasional GMaps: ${jamOps}`);
   lines.push('');
 
-  // Eksternal
   if (media || tiktok || mention) {
     lines.push('SINYAL LAIN:');
     if (media) lines.push(`- Media/artikel: ${media}`);
@@ -478,7 +691,6 @@ function generate() {
     lines.push('');
   }
 
-  // Instruksi draf chat — hanya muncul jika checkbox dicentang
   if (document.getElementById('showInstruksi').checked) {
     lines.push('---');
     lines.push('INSTRUKSI UNTUK DRAF CHAT:');
@@ -497,11 +709,14 @@ function generate() {
 function copyOutput() {
   const text = document.getElementById('output').textContent;
   if (!text || text.startsWith('Isi form')) return;
-  navigator.clipboard.writeText(text).then(() => {
-    const t = document.getElementById('toast');
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 1600);
-  });
+  navigator.clipboard.writeText(text).then(() => showToast('Tersalin ✓'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1600);
 }
 
 function clearAll() {
@@ -511,6 +726,8 @@ function clearAll() {
   addPost();
   document.getElementById('output').textContent = 'Isi form → Generate. Teks di bawah langsung bisa dikasih ke AI untuk bikin draf chat.';
   document.querySelector('input[name="tl"][value="🟡"]').checked = true;
+  document.getElementById('memSelect').value = '';
+  hideSuggestions();
 }
 
 function fillExample() {
@@ -549,7 +766,138 @@ function fillExample() {
   generate();
 }
 
+/* ========== KEYBOARD NAVIGATION (Enter = next field) ========== */
+function getFocusable() {
+  return Array.from(document.querySelectorAll(
+    'input:not([type="radio"]):not([type="checkbox"]):not([disabled]), select:not([disabled]), textarea:not([disabled])'
+  )).filter(el => el.offsetParent !== null);
+}
+
+function focusNext(current) {
+  const list = getFocusable();
+  const idx = list.indexOf(current);
+  if (idx >= 0 && idx < list.length - 1) {
+    list[idx + 1].focus();
+    if (list[idx + 1].select && list[idx + 1].type !== 'number') {
+      try { list[idx + 1].select(); } catch {}
+    }
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  const el = e.target;
+  if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
+
+  // Enter on input/select → next field (except textarea, biar bisa enter baris)
+  if (e.key === 'Enter' && el.tagName !== 'TEXTAREA') {
+    e.preventDefault();
+    // Special: if on nama and exact match exists, load first then move
+    if (el.id === 'nama') {
+      const mem = getMemory();
+      if (mem[el.value.trim()]) {
+        applyFormData(mem[el.value.trim()]);
+        hideSuggestions();
+        // after load, focus next of original
+        setTimeout(() => focusNext(document.getElementById('nama')), 30);
+        return;
+      }
+    }
+    focusNext(el);
+    return;
+  }
+
+  // Ctrl/Cmd + S = save
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveCurrent();
+  }
+});
+
+/* ========== NAMA AUTOCOMPLETE + AUTOLOAD ========== */
+const namaInput = document.getElementById('nama');
+const suggBox = document.getElementById('namaSuggestions');
+let suggIndex = -1;
+
+function hideSuggestions() {
+  suggBox.classList.remove('show');
+  suggBox.innerHTML = '';
+  suggIndex = -1;
+}
+
+function showSuggestions(filter) {
+  const mem = getMemory();
+  const keys = Object.keys(mem).filter(k =>
+    !filter || k.toLowerCase().includes(filter.toLowerCase())
+  ).sort((a, b) => a.localeCompare(b, 'id'));
+
+  if (!keys.length) {
+    hideSuggestions();
+    return;
+  }
+
+  suggBox.innerHTML = keys.slice(0, 12).map((k, i) =>
+    `<div data-name="${k.replace(/"/g, '&quot;')}" class="${i === 0 ? 'active' : ''}">${k}</div>`
+  ).join('');
+  suggBox.classList.add('show');
+  suggIndex = 0;
+
+  suggBox.querySelectorAll('div').forEach(div => {
+    div.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const name = div.dataset.name;
+      namaInput.value = name;
+      applyFormData(getMemory()[name]);
+      hideSuggestions();
+      setTimeout(() => focusNext(namaInput), 30);
+    });
+  });
+}
+
+namaInput.addEventListener('input', () => {
+  const val = namaInput.value.trim();
+  if (val.length >= 1) showSuggestions(val);
+  else hideSuggestions();
+});
+
+namaInput.addEventListener('keydown', (e) => {
+  const items = suggBox.querySelectorAll('div');
+  if (!suggBox.classList.contains('show') || !items.length) return;
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    suggIndex = Math.min(suggIndex + 1, items.length - 1);
+    items.forEach((d, i) => d.classList.toggle('active', i === suggIndex));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    suggIndex = Math.max(suggIndex - 1, 0);
+    items.forEach((d, i) => d.classList.toggle('active', i === suggIndex));
+  } else if (e.key === 'Enter' && suggIndex >= 0) {
+    e.preventDefault();
+    const name = items[suggIndex].dataset.name;
+    namaInput.value = name;
+    applyFormData(getMemory()[name]);
+    hideSuggestions();
+    setTimeout(() => focusNext(namaInput), 30);
+  } else if (e.key === 'Escape') {
+    hideSuggestions();
+  }
+});
+
+namaInput.addEventListener('blur', () => {
+  setTimeout(hideSuggestions, 150);
+  // exact match auto-load on blur
+  const val = namaInput.value.trim();
+  const mem = getMemory();
+  if (val && mem[val]) {
+    // only load if current form is mostly empty (avoid overwrite while editing)
+    const ig = v('ig');
+    if (!ig) applyFormData(mem[val]);
+  }
+});
+
+/* Init */
 addPost();
+refreshMemSelect();
 </script>
 </body>
 </html>
