@@ -25,12 +25,83 @@
     background: var(--bg);
     color: var(--text);
     line-height: 1.5;
-    padding: 16px;
+    padding: 12px 16px 24px;
     max-width: 1100px;
     margin: 0 auto;
   }
-  h1 { font-size: 1.3rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
-  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 18px; }
+  h1 { font-size: 1.25rem; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+  .subtitle { color: var(--muted); font-size: 0.8rem; margin-bottom: 12px; }
+
+  /* ===== TABS ===== */
+  .tabs-bar {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 0;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0;
+  }
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px 8px 14px;
+    background: #141c28;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+    max-width: 200px;
+    user-select: none;
+    margin-right: 2px;
+    transition: background 0.12s, color 0.12s;
+  }
+  .tab:hover { background: #1a2433; color: var(--text); }
+  .tab.active {
+    background: var(--card);
+    color: var(--accent);
+    border-color: var(--border);
+    font-weight: 600;
+  }
+  .tab-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+  .tab-close {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 0 2px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .tab-close:hover { color: var(--red); background: #2a1a1a; }
+  .tab-add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    margin-left: 4px;
+    margin-top: 4px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .tab-add:hover { border-color: var(--accent); color: var(--accent); }
+
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
   .card {
@@ -68,7 +139,6 @@
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
   textarea { min-height: 64px; resize: vertical; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
   .posts-list { display: flex; flex-direction: column; gap: 6px; }
   .post-row {
     display: grid;
@@ -157,13 +227,12 @@
     font-size: 0.82rem;
     cursor: pointer;
   }
-  /* Memory UI */
   .mem-bar {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     align-items: center;
-    margin-bottom: 12px;
+    margin: 10px 0 12px;
     padding: 10px 12px;
     background: var(--card);
     border: 1px solid var(--border);
@@ -174,10 +243,7 @@
     flex: 1;
     min-width: 160px;
   }
-  .mem-status {
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
+  .mem-status { font-size: 0.75rem; color: var(--muted); }
   .mem-status.loaded { color: var(--green); }
   .nama-wrap { position: relative; }
   .suggestions {
@@ -210,18 +276,27 @@
 <body>
 
 <h1>🦁 BizDev Scout — Audit → Draft Chat</h1>
-<p class="subtitle">Isi field → Generate teks rapi → copy → kasih makan AI supaya bikin draf chat outreach.<br>
-<span style="color:var(--accent)">⌨️ Enter / Tab</span> = pindah field · <span style="color:var(--accent)">💾 Memori</span> = auto-save & auto-load per nama properti (unlimited, tersimpan di browser).</p>
+<p class="subtitle">
+  <span style="color:var(--accent)">Tab</span> = multi properti dalam 1 halaman ·
+  <span style="color:var(--accent)">Enter / Tab</span> = pindah field ·
+  <span style="color:var(--accent)">💾</span> = memori permanen per nama
+</p>
+
+<!-- TAB BAR -->
+<div class="tabs-bar" id="tabsBar">
+  <!-- tabs injected by JS -->
+  <button type="button" class="tab-add" id="tabAdd" title="Tab baru">+</button>
+</div>
 
 <div class="mem-bar">
-  <label style="margin:0;font-size:0.78rem;color:var(--muted)">Memori tersimpan:</label>
+  <label style="margin:0;font-size:0.78rem;color:var(--muted)">Memori permanen:</label>
   <select id="memSelect">
-    <option value="">— pilih untuk load —</option>
+    <option value="">— pilih untuk load ke tab aktif —</option>
   </select>
-  <button type="button" class="btn btn-secondary btn-sm" onclick="loadFromSelect()">Load</button>
-  <button type="button" class="btn btn-secondary btn-sm" onclick="saveCurrent()">💾 Simpan sekarang</button>
-  <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelected()">Hapus</button>
-  <span class="mem-status" id="memStatus">0 properti tersimpan</span>
+  <button type="button" class="btn btn-secondary btn-sm" onclick="loadFromSelect()">Load ke tab</button>
+  <button type="button" class="btn btn-secondary btn-sm" onclick="saveCurrent()">💾 Simpan ke memori</button>
+  <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelected()">Hapus memori</button>
+  <span class="mem-status" id="memStatus">0 properti</span>
 </div>
 
 <div class="grid">
@@ -233,7 +308,7 @@
       <input type="text" id="nama" placeholder="Edge Resort Yogyakarta" autocomplete="off"/>
       <div class="suggestions" id="namaSuggestions"></div>
     </div>
-    <div class="hint">Ketik nama yang pernah disimpan → muncul saran & auto-isi semua field</div>
+    <div class="hint">Ketik nama tersimpan → saran & auto-isi · judul tab ikut berubah</div>
     <div class="row">
       <div>
         <label>IG Handle</label>
@@ -363,7 +438,7 @@
   <button class="btn btn-primary" onclick="generate()">⚡ Generate untuk AI</button>
   <button class="btn btn-secondary" onclick="copyOutput()">📋 Copy</button>
   <button class="btn btn-secondary" onclick="fillExample()">Contoh Edge Resort</button>
-  <button class="btn btn-secondary" onclick="clearAll()">Reset</button>
+  <button class="btn btn-secondary" onclick="clearAll()">Reset tab</button>
   <label style="margin:0;display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--muted);cursor:pointer">
     <input type="checkbox" id="showInstruksi"/> Tampilkan instruksi draf chat
   </label>
@@ -377,26 +452,34 @@
 <div class="copy-toast" id="toast">Tersalin ✓</div>
 
 <script>
-const STORAGE_KEY = 'lion_bizdev_scout_memory_v1';
+const MEM_KEY = 'lion_bizdev_scout_memory_v1';
+const TABS_KEY = 'lion_bizdev_scout_tabs_v1';
 
-/* ========== MEMORY ========== */
-function getMemory() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-  } catch { return {}; }
+/* ========== STATE ========== */
+let tabs = [];          // [{ id, title, data }]
+let activeTabId = null;
+let tabCounter = 0;
+
+function uid() {
+  tabCounter++;
+  return 't' + Date.now().toString(36) + tabCounter;
 }
 
+/* ========== MEMORY (permanen per nama) ========== */
+function getMemory() {
+  try { return JSON.parse(localStorage.getItem(MEM_KEY) || '{}'); }
+  catch { return {}; }
+}
 function setMemory(obj) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  localStorage.setItem(MEM_KEY, JSON.stringify(obj));
   refreshMemSelect();
 }
-
 function refreshMemSelect() {
   const mem = getMemory();
   const keys = Object.keys(mem).sort((a, b) => a.localeCompare(b, 'id'));
   const sel = document.getElementById('memSelect');
   const current = sel.value;
-  sel.innerHTML = '<option value="">— pilih untuk load —</option>';
+  sel.innerHTML = '<option value="">— pilih untuk load ke tab aktif —</option>';
   keys.forEach(k => {
     const opt = document.createElement('option');
     opt.value = k;
@@ -405,12 +488,55 @@ function refreshMemSelect() {
   });
   if (current && mem[current]) sel.value = current;
   const st = document.getElementById('memStatus');
-  st.textContent = keys.length + ' properti tersimpan';
+  st.textContent = keys.length + ' properti';
   st.className = 'mem-status' + (keys.length ? ' loaded' : '');
 }
 
+/* ========== FORM HELPERS ========== */
+function v(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function c(id) { const el = document.getElementById(id); return el && el.checked; }
+function tl() { const r = document.querySelector('input[name="tl"]:checked'); return r ? r.value : '🟡'; }
+
+function getPosts() {
+  return Array.from(document.querySelectorAll('#postsList .post-row')).map(r => ({
+    likes: r.querySelector('.p-likes').value.trim(),
+    komen: r.querySelector('.p-komen').value.trim(),
+    tipe: r.querySelector('.p-tipe').value,
+    tgl: r.querySelector('.p-tgl').value.trim()
+  })).filter(p => p.likes || p.komen || p.tgl);
+}
+
+function addPost(data = {}) {
+  const list = document.getElementById('postsList');
+  const row = document.createElement('div');
+  row.className = 'post-row';
+  row.innerHTML = `
+    <div>
+      <label style="margin:0;font-size:0.68rem">Likes</label>
+      <input type="text" class="p-likes" placeholder="188" value="${data.likes || ''}"/>
+    </div>
+    <div>
+      <label style="margin:0;font-size:0.68rem">Komen</label>
+      <input type="text" class="p-komen" placeholder="1" value="${data.komen || ''}"/>
+    </div>
+    <div>
+      <label style="margin:0;font-size:0.68rem">Tipe</label>
+      <select class="p-tipe">
+        <option value="KOL" ${data.tipe === 'KOL' ? 'selected' : ''}>KOL</option>
+        <option value="non-KOL" ${data.tipe === 'non-KOL' ? 'selected' : ''}>non-KOL</option>
+        <option value="organik" ${data.tipe === 'organik' ? 'selected' : ''}>organik</option>
+      </select>
+    </div>
+    <div>
+      <label style="margin:0;font-size:0.68rem">Tanggal / catatan</label>
+      <input type="text" class="p-tgl" placeholder="10 sept · influencer" value="${data.tgl || ''}"/>
+    </div>
+    <button type="button" class="btn-icon" onclick="this.parentElement.remove()">×</button>
+  `;
+  list.appendChild(row);
+}
+
 function collectFormData() {
-  const posts = getPosts();
   return {
     nama: v('nama'),
     ig: v('ig'),
@@ -419,7 +545,7 @@ function collectFormData() {
     tl: tl(),
     totalPost: v('totalPost'),
     reels: v('reels'),
-    posts,
+    posts: getPosts(),
     lighting: v('lighting'),
     tema: v('tema'),
     pp: v('pp'),
@@ -441,12 +567,13 @@ function collectFormData() {
     hook: v('hook'),
     catatan: v('catatan'),
     showInstruksi: c('showInstruksi'),
+    output: document.getElementById('output').textContent,
     _savedAt: new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
   };
 }
 
 function applyFormData(data) {
-  if (!data) return;
+  if (!data) data = {};
   document.getElementById('nama').value = data.nama || '';
   document.getElementById('ig').value = data.ig || '';
   document.getElementById('followers').value = data.followers || '';
@@ -478,16 +605,178 @@ function applyFormData(data) {
   document.getElementById('catatan').value = data.catatan || '';
   document.getElementById('showInstruksi').checked = !!data.showInstruksi;
 
-  // Posts
   document.getElementById('postsList').innerHTML = '';
   if (data.posts && data.posts.length) {
     data.posts.forEach(p => addPost(p));
   } else {
     addPost();
   }
-  showToast('Loaded: ' + (data.nama || 'data'));
+
+  const out = document.getElementById('output');
+  if (data.output && !data.output.startsWith('Isi form')) {
+    out.textContent = data.output;
+  } else {
+    out.textContent = 'Isi form → Generate. Teks di bawah langsung bisa dikasih ke AI untuk bikin draf chat.';
+  }
 }
 
+function emptyData() {
+  return {
+    nama: '', ig: '', followers: '', history: '', tl: '🟡',
+    totalPost: '', reels: 'hampir semua', posts: [],
+    lighting: 'jelas', tema: '', pp: '',
+    bioLink: '', hasWA: false, hasGMaps: false, hasWeb: false, hasOTA: false, hasTT: false, bioNote: '',
+    replyRate: 'hampir semua / semua', fotoSumber: 'pemilik banyak, pengunjung beberapa', jamOps: 'tidak terisi',
+    media: '', tiktok: '', mention: '', deskripsi: '', ulasan: '', hook: '', catatan: '',
+    showInstruksi: false, output: ''
+  };
+}
+
+/* ========== TABS ========== */
+function persistTabs() {
+  // save current form into active tab first
+  const t = tabs.find(x => x.id === activeTabId);
+  if (t) {
+    t.data = collectFormData();
+    t.title = (t.data.nama || '').trim() || t.title || 'Tab baru';
+  }
+  localStorage.setItem(TABS_KEY, JSON.stringify({
+    tabs: tabs.map(x => ({ id: x.id, title: x.title, data: x.data })),
+    activeTabId,
+    tabCounter
+  }));
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tabsBar');
+  // remove existing tab elements (keep the + button)
+  bar.querySelectorAll('.tab').forEach(el => el.remove());
+  const addBtn = document.getElementById('tabAdd');
+
+  tabs.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'tab' + (t.id === activeTabId ? ' active' : '');
+    el.dataset.id = t.id;
+    el.innerHTML = `
+      <span class="tab-title" title="${(t.title || 'Tab baru').replace(/"/g, '&quot;')}">${t.title || 'Tab baru'}</span>
+      <button type="button" class="tab-close" title="Tutup tab">×</button>
+    `;
+    el.addEventListener('click', (e) => {
+      if (e.target.classList.contains('tab-close')) {
+        e.stopPropagation();
+        closeTab(t.id);
+      } else {
+        switchTab(t.id);
+      }
+    });
+    bar.insertBefore(el, addBtn);
+  });
+}
+
+function switchTab(id) {
+  if (id === activeTabId) return;
+  // save current
+  const cur = tabs.find(x => x.id === activeTabId);
+  if (cur) {
+    cur.data = collectFormData();
+    cur.title = (cur.data.nama || '').trim() || cur.title || 'Tab baru';
+  }
+  activeTabId = id;
+  const next = tabs.find(x => x.id === id);
+  if (next) {
+    applyFormData(next.data || emptyData());
+  }
+  renderTabs();
+  persistTabs();
+}
+
+function addTab(data) {
+  // save current first
+  const cur = tabs.find(x => x.id === activeTabId);
+  if (cur) {
+    cur.data = collectFormData();
+    cur.title = (cur.data.nama || '').trim() || cur.title || 'Tab baru';
+  }
+  const d = data || emptyData();
+  const title = (d.nama || '').trim() || 'Tab baru';
+  const id = uid();
+  tabs.push({ id, title, data: d });
+  activeTabId = id;
+  applyFormData(d);
+  renderTabs();
+  persistTabs();
+  showToast('Tab baru');
+  setTimeout(() => document.getElementById('nama').focus(), 50);
+}
+
+function closeTab(id) {
+  if (tabs.length <= 1) {
+    // last tab → just reset it
+    const t = tabs[0];
+    t.data = emptyData();
+    t.title = 'Tab baru';
+    applyFormData(t.data);
+    renderTabs();
+    persistTabs();
+    showToast('Tab direset');
+    return;
+  }
+  const idx = tabs.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  tabs.splice(idx, 1);
+  if (activeTabId === id) {
+    // switch to neighbor
+    const newIdx = Math.min(idx, tabs.length - 1);
+    activeTabId = tabs[newIdx].id;
+    applyFormData(tabs[newIdx].data || emptyData());
+  }
+  renderTabs();
+  persistTabs();
+}
+
+function updateActiveTabTitle() {
+  const t = tabs.find(x => x.id === activeTabId);
+  if (!t) return;
+  const nama = v('nama');
+  t.title = nama || 'Tab baru';
+  // update only the visible title without full re-render if possible
+  const el = document.querySelector(`.tab[data-id="${t.id}"] .tab-title`);
+  if (el) {
+    el.textContent = t.title;
+    el.title = t.title;
+  }
+}
+
+function loadTabsFromStorage() {
+  try {
+    const raw = localStorage.getItem(TABS_KEY);
+    if (!raw) {
+      // first run
+      const id = uid();
+      tabs = [{ id, title: 'Tab baru', data: emptyData() }];
+      activeTabId = id;
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    tabs = parsed.tabs || [];
+    activeTabId = parsed.activeTabId;
+    tabCounter = parsed.tabCounter || tabs.length;
+    if (!tabs.length) {
+      const id = uid();
+      tabs = [{ id, title: 'Tab baru', data: emptyData() }];
+      activeTabId = id;
+    }
+    if (!tabs.find(x => x.id === activeTabId)) {
+      activeTabId = tabs[0].id;
+    }
+  } catch {
+    const id = uid();
+    tabs = [{ id, title: 'Tab baru', data: emptyData() }];
+    activeTabId = id;
+  }
+}
+
+/* ========== MEMORY ACTIONS ========== */
 function saveCurrent() {
   const nama = v('nama');
   if (!nama) {
@@ -495,9 +784,18 @@ function saveCurrent() {
     return;
   }
   const mem = getMemory();
-  mem[nama] = collectFormData();
+  const data = collectFormData();
+  mem[nama] = data;
   setMemory(mem);
+  // also update current tab
+  const t = tabs.find(x => x.id === activeTabId);
+  if (t) {
+    t.data = data;
+    t.title = nama;
+  }
   document.getElementById('memSelect').value = nama;
+  renderTabs();
+  persistTabs();
   showToast('Tersimpan: ' + nama);
 }
 
@@ -505,7 +803,12 @@ function loadFromSelect() {
   const key = document.getElementById('memSelect').value;
   if (!key) return;
   const mem = getMemory();
-  if (mem[key]) applyFormData(mem[key]);
+  if (mem[key]) {
+    applyFormData(mem[key]);
+    updateActiveTabTitle();
+    persistTabs();
+    showToast('Loaded: ' + key);
+  }
 }
 
 function deleteSelected() {
@@ -518,64 +821,19 @@ function deleteSelected() {
   showToast('Dihapus: ' + key);
 }
 
-/* Auto-save on Generate + when leaving nama field if exact match exists or after generate */
-function tryAutoLoadByName() {
-  const nama = v('nama');
-  if (!nama) return;
-  const mem = getMemory();
-  if (mem[nama]) {
-    applyFormData(mem[nama]);
-  }
-}
-
-/* ========== POSTS ========== */
-function addPost(data = {}) {
-  const list = document.getElementById('postsList');
-  const row = document.createElement('div');
-  row.className = 'post-row';
-  row.innerHTML = `
-    <div>
-      <label style="margin:0;font-size:0.68rem">Likes</label>
-      <input type="text" class="p-likes" placeholder="188" value="${data.likes || ''}"/>
-    </div>
-    <div>
-      <label style="margin:0;font-size:0.68rem">Komen</label>
-      <input type="text" class="p-komen" placeholder="1" value="${data.komen || ''}"/>
-    </div>
-    <div>
-      <label style="margin:0;font-size:0.68rem">Tipe</label>
-      <select class="p-tipe">
-        <option value="KOL" ${data.tipe === 'KOL' ? 'selected' : ''}>KOL</option>
-        <option value="non-KOL" ${data.tipe === 'non-KOL' ? 'selected' : ''}>non-KOL</option>
-        <option value="organik" ${data.tipe === 'organik' ? 'selected' : ''}>organik</option>
-      </select>
-    </div>
-    <div>
-      <label style="margin:0;font-size:0.68rem">Tanggal / catatan</label>
-      <input type="text" class="p-tgl" placeholder="10 sept · influencer" value="${data.tgl || ''}"/>
-    </div>
-    <button type="button" class="btn-icon" onclick="this.parentElement.remove()">×</button>
-  `;
-  list.appendChild(row);
-}
-
-function getPosts() {
-  return Array.from(document.querySelectorAll('#postsList .post-row')).map(r => ({
-    likes: r.querySelector('.p-likes').value.trim(),
-    komen: r.querySelector('.p-komen').value.trim(),
-    tipe: r.querySelector('.p-tipe').value,
-    tgl: r.querySelector('.p-tgl').value.trim()
-  })).filter(p => p.likes || p.komen || p.tgl);
-}
-
-function v(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
-function c(id) { const el = document.getElementById(id); return el && el.checked; }
-function tl() { const r = document.querySelector('input[name="tl"]:checked'); return r ? r.value : '🟡'; }
-
 /* ========== GENERATE ========== */
 function generate() {
-  // Auto-save before generate if nama filled
-  if (v('nama')) saveCurrent();
+  if (v('nama')) {
+    // auto-save to permanent memory
+    const mem = getMemory();
+    const data = collectFormData();
+    mem[v('nama')] = data;
+    setMemory(mem);
+  }
+  // always persist tabs
+  persistTabs();
+  updateActiveTabTitle();
+  renderTabs();
 
   const nama = v('nama') || '[Nama]';
   const ig = v('ig');
@@ -703,7 +961,10 @@ function generate() {
     lines.push('- 1 hook saja, jangan list banyak masalah.');
   }
 
-  document.getElementById('output').textContent = lines.join('\n').trim();
+  const text = lines.join('\n').trim();
+  document.getElementById('output').textContent = text;
+  // keep output in tab data
+  persistTabs();
 }
 
 function copyOutput() {
@@ -720,14 +981,11 @@ function showToast(msg) {
 }
 
 function clearAll() {
-  document.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => el.value = '');
-  document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
-  document.getElementById('postsList').innerHTML = '';
-  addPost();
-  document.getElementById('output').textContent = 'Isi form → Generate. Teks di bawah langsung bisa dikasih ke AI untuk bikin draf chat.';
-  document.querySelector('input[name="tl"][value="🟡"]').checked = true;
-  document.getElementById('memSelect').value = '';
-  hideSuggestions();
+  applyFormData(emptyData());
+  updateActiveTabTitle();
+  persistTabs();
+  renderTabs();
+  showToast('Tab direset');
 }
 
 function fillExample() {
@@ -763,10 +1021,11 @@ function fillExample() {
   addPost({ likes: '117', komen: '4', tipe: 'KOL', tgl: '7 sept' });
   addPost({ likes: '200', komen: '11', tipe: 'KOL', tgl: '6 september' });
   addPost({ likes: '20', komen: '0', tipe: 'non-KOL', tgl: '27 agustus' });
+  updateActiveTabTitle();
   generate();
 }
 
-/* ========== KEYBOARD NAVIGATION (Enter = next field) ========== */
+/* ========== KEYBOARD ========== */
 function getFocusable() {
   return Array.from(document.querySelectorAll(
     'input:not([type="radio"]):not([type="checkbox"]):not([disabled]), select:not([disabled]), textarea:not([disabled])'
@@ -788,16 +1047,15 @@ document.addEventListener('keydown', function(e) {
   const el = e.target;
   if (!el || !['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName)) return;
 
-  // Enter on input/select → next field (except textarea, biar bisa enter baris)
   if (e.key === 'Enter' && el.tagName !== 'TEXTAREA') {
     e.preventDefault();
-    // Special: if on nama and exact match exists, load first then move
     if (el.id === 'nama') {
       const mem = getMemory();
       if (mem[el.value.trim()]) {
         applyFormData(mem[el.value.trim()]);
         hideSuggestions();
-        // after load, focus next of original
+        updateActiveTabTitle();
+        persistTabs();
         setTimeout(() => focusNext(document.getElementById('nama')), 30);
         return;
       }
@@ -806,14 +1064,13 @@ document.addEventListener('keydown', function(e) {
     return;
   }
 
-  // Ctrl/Cmd + S = save
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     e.preventDefault();
     saveCurrent();
   }
 });
 
-/* ========== NAMA AUTOCOMPLETE + AUTOLOAD ========== */
+/* ========== NAMA AUTOCOMPLETE ========== */
 const namaInput = document.getElementById('nama');
 const suggBox = document.getElementById('namaSuggestions');
 let suggIndex = -1;
@@ -830,10 +1087,7 @@ function showSuggestions(filter) {
     !filter || k.toLowerCase().includes(filter.toLowerCase())
   ).sort((a, b) => a.localeCompare(b, 'id'));
 
-  if (!keys.length) {
-    hideSuggestions();
-    return;
-  }
+  if (!keys.length) { hideSuggestions(); return; }
 
   suggBox.innerHTML = keys.slice(0, 12).map((k, i) =>
     `<div data-name="${k.replace(/"/g, '&quot;')}" class="${i === 0 ? 'active' : ''}">${k}</div>`
@@ -848,6 +1102,8 @@ function showSuggestions(filter) {
       namaInput.value = name;
       applyFormData(getMemory()[name]);
       hideSuggestions();
+      updateActiveTabTitle();
+      persistTabs();
       setTimeout(() => focusNext(namaInput), 30);
     });
   });
@@ -857,6 +1113,7 @@ namaInput.addEventListener('input', () => {
   const val = namaInput.value.trim();
   if (val.length >= 1) showSuggestions(val);
   else hideSuggestions();
+  updateActiveTabTitle();
 });
 
 namaInput.addEventListener('keydown', (e) => {
@@ -877,6 +1134,8 @@ namaInput.addEventListener('keydown', (e) => {
     namaInput.value = name;
     applyFormData(getMemory()[name]);
     hideSuggestions();
+    updateActiveTabTitle();
+    persistTabs();
     setTimeout(() => focusNext(namaInput), 30);
   } else if (e.key === 'Escape') {
     hideSuggestions();
@@ -885,19 +1144,35 @@ namaInput.addEventListener('keydown', (e) => {
 
 namaInput.addEventListener('blur', () => {
   setTimeout(hideSuggestions, 150);
-  // exact match auto-load on blur
   const val = namaInput.value.trim();
   const mem = getMemory();
-  if (val && mem[val]) {
-    // only load if current form is mostly empty (avoid overwrite while editing)
-    const ig = v('ig');
-    if (!ig) applyFormData(mem[val]);
+  if (val && mem[val] && !v('ig')) {
+    applyFormData(mem[val]);
+    updateActiveTabTitle();
+    persistTabs();
+  } else {
+    updateActiveTabTitle();
+    persistTabs();
   }
 });
 
-/* Init */
-addPost();
+/* auto-persist form changes (debounced lightly via blur on most fields) */
+document.querySelectorAll('input, select, textarea').forEach(el => {
+  if (el.id === 'nama') return;
+  el.addEventListener('change', () => persistTabs());
+});
+
+/* ========== INIT ========== */
+document.getElementById('tabAdd').addEventListener('click', () => addTab());
+
+loadTabsFromStorage();
+const active = tabs.find(x => x.id === activeTabId);
+applyFormData(active ? active.data : emptyData());
+renderTabs();
 refreshMemSelect();
+
+// save on page hide
+window.addEventListener('beforeunload', () => persistTabs());
 </script>
 </body>
 </html>
